@@ -31,6 +31,7 @@ def get_models_list():
         "argilla/notus-7b-v1",
         "HuggingFaceH4/zephyr-7b-beta",
         "ikala/redpajama-3b-chat",
+        "togethercomputer/RedPajama-INCITE-Instruct-3B-v1",
         "mistralai/Mistral-7B-v0.1",
         
         # "meta-llama/Llama-2-7b-chat-hf",  # Cannot be downloaded without access token
@@ -158,6 +159,7 @@ def get_chat_templates():
         "MLP-KTLim/llama-3-Korean-Bllossom-8B",
         "aloobun/CosmicBun-8B", # Chat template is not supported by Jinja2Cpp
         "codellama/CodeLlama-70b-Instruct-hf",
+        # "togethercomputer/RedPajama-INCITE-Instruct-3B-v1", # Chat template not found
         "gorilla-llm/gorilla-openfunctions-v2", # Chat template is not supported by Jinja2Cpp
         "BramVanroy/Llama-2-13b-chat-dutch"
     }
