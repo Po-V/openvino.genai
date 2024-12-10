@@ -43,6 +43,7 @@
       <td>
         <ul>
           <li><a href="https://huggingface.co/ikala/redpajama-3b-chat"><code>ikala/redpajama-3b-chat</code></a></li>
+          <li><a href="https://huggingface.co/togethercomputer/RedPajama-INCITE-Instruct-3B-v1"><code>togethercomputer/RedPajama-INCITE-Instruct-3B-v1</code></a></li>
         </ul>
       </td>
     </tr>

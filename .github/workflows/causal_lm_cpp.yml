@@ -645,6 +645,61 @@ jobs:
         env:
           PYTHONPATH: "./build"
 
+  cpp-greedy_causal_lm-redpajama-3b-instruct:
+    runs-on: ubuntu-20.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+      - name: Install OpenVINO
+        run: |
+          mkdir ./ov/
+          curl ${{ env.l_ov_link }} | tar --directory ./ov/ --strip-components 1 -xz
+          sudo ./ov/install_dependencies/install_openvino_dependencies.sh
+      - name: Download, convert and build
+        run: |
+          source ./ov/setupvars.sh
+          cmake -DCMAKE_BUILD_TYPE=Release -S ./ -B ./build/
+          cmake --build ./build/ --config Release -j
+      - name: Build app
+        run: |
+          source ./ov/setupvars.sh
+          python -m pip install ./thirdparty/openvino_tokenizers/[transformers] --extra-index-url https://storage.openvinotoolkit.org/simple/wheels/nightly
+          python -m pip install -r ./samples/requirements.txt
+          optimum-cli export openvino --trust-remote-code --weight-format fp16 --model togethercomputer/RedPajama-INCITE-Instruct-3B-v1 RedPajama-INCITE-Instruct-3B-v1
+      - name: Download, convert and model
+        run: |
+          source ./ov/setupvars.sh
+          timeout 50s ./build/samples/cpp/greedy_causal_lm/greedy_causal_lm ./RedPajama-INCITE-Instruct-3B-v1/ "Alan Turing was a" > ./pred_greedy.txt
+      - name: Compare
+        run: |
+          python -c "
+          import transformers
+          with open('pred_greedy.txt', 'r') as file:
+              predictions = file.read()
+          tokenizer = transformers.AutoTokenizer.from_pretrained('togethercomputer/RedPajama-INCITE-Instruct-3B-v1')
+          tokenized = tokenizer('Alan Turing was a', return_tensors='pt')
+          for output in transformers.AutoModelForCausalLM.from_pretrained('togethercomputer/RedPajama-INCITE-Instruct-3B-v1').generate(**tokenized, max_length=100, do_sample=False):
+              ref = tokenizer.decode(output[tokenized['input_ids'].numel():], skip_special_tokens=True)
+              idx = predictions.find(ref)
+              if -1 == idx:
+                  raise RuntimeError(f'Missing "{ref}" from predictions')
+              predictions = predictions[:idx] + predictions[idx + len(ref):]
+          "
+          echo "Alan Turing was a" passed
+      - run: >
+          . ./ov/setupvars.sh
+          && timeout 50s samples/python/greedy_causal_lm/greedy_causal_lm.py ./RedPajama-INCITE-Instruct-3B-v1/ "Alan Turing was a"
+          | diff ./pred_greedy.txt -
+        env:
+          PYTHONPATH: "./build"
+
   cpp-chat_sample-ubuntu:
     runs-on: ubuntu-24.04
     defaults:
